@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 虚拟环境
+venv/
+env/
+
+# 日志文件
+*.log
+logs/
+
+# IDE配置
+.vscode/
+.idea/
+
+# 密钥和测试数据
+/assets/keys.txt
+/src/assets/keys.txt
+/src/assets/keys/sm2_key.txt
+
+# 签名数据
+/src/data/signed/*
+!/src/data/signed/.gitkeep
+/src/data/input/*
+!/src/data/input/.gitkeep
