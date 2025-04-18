@@ -2,23 +2,23 @@
 
 基于国密 SM2 算法的数字签名系统，提供图形界面（GUI）和 Web 界面两种使用方式，支持完整的密钥管理、文件签名和验证功能。
 
-## 功能特点 ✨
+## 功能特点 
 
-- 🔐 完整实现 SM2 椭圆曲线数字签名算法
-- 💻 同时支持桌面客户端（GUI）和 Web 界面
-- 🔑 完整的密钥对管理功能
+  - 完整实现 SM2 椭圆曲线数字签名算法
+  - 同时支持桌面客户端（GUI）和 Web 界面
+  - 完整的密钥对管理功能
   - 生成新的密钥对
   - 导入/导出密钥对
   - 私钥安全显示/隐藏
-- 📝 文件签名功能
+  - 文件签名功能
   - 支持对文本文件进行签名
   - 自动计算文件 SM3 哈希值
   - 生成包含完整签名信息的 .sig 文件
-- ✅ 签名验证功能
+  - 签名验证功能
   - 验证签名的有效性
   - 支持导入 .sig 签名文件
   - 详细的验证信息展示
-- 🎯 用户友好的界面设计
+  - 用户友好的界面设计
   - 简洁直观的操作流程
   - 优雅的动画过渡效果
   - 即时的操作反馈
@@ -38,7 +38,7 @@
 ### 1. 克隆仓库
 
 ```bash
-git clone https://github.com/yourusername/sm2-signature-system.git
+git clone https://github.com/Neras220/sm2-signature-2.git
 cd sm2-signature-system
 ```
 
@@ -141,18 +141,6 @@ src/
 - 前端：
   - Bootstrap 5
   - 原生 JavaScript
-
-## 贡献指南 👥
-
-1. Fork 本仓库
-2. 创建特性分支：`git checkout -b feature/AmazingFeature`
-3. 提交改动：`git commit -m 'Add some AmazingFeature'`
-4. 推送分支：`git push origin feature/AmazingFeature`
-5. 提交 Pull Request
-
-## 许可证 📄
-
-本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件
 
 ## 更新日志 📋
 
