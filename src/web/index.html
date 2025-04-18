@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SM2签名验证系统</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- 自定义样式 -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- 加载状态样式 -->
+    <style>
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 9999;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .loading.show {
+            opacity: 1;
+            visibility: visible;
+        }
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 9998;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+        }
+        .loading-overlay.show {
+            opacity: 1; 
+            visibility: visible;
+        }
+        .toast-container {
+            z-index: 9999;
+        }
+
+        .hide-details {
+            max-height: 0;
+            overflow: hidden;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 0;
+            padding-bottom: 0;
+            margin: 0;
+        }
+
+        .show {
+            max-height: 500px;
+            opacity: 1;
+            transform: translateY(0);
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1),
+                        opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+                        padding 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding-top: 1rem;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        /* 私钥输入框样式 */
+        #privateKey[type="password"] {
+            font-family: sans-serif;
+            letter-spacing: 0.1em;
+        }
+    </style>
+</head>
+<body>
+    <!-- 加载状态指示器 -->
+    <div id="loading" style="display: none;">
+        <div class="loading-overlay"></div>
+        <div class="loading">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">加载中...</span>
+            </div>
+            <div class="mt-2">处理中，请稍候...</div>
+        </div>
+    </div>
+
+    <!-- 导航栏 -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light mb-4">
+        <div class="container">
+            <a class="navbar-brand" href="#">SM2签名验证系统</a>
+            <div class="navbar-text" id="connectionStatus">
+                <span class="badge bg-success">已连接</span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主容器 -->
+    <div class="container">
+        <!-- 标签页导航 -->
+        <ul class="nav nav-tabs mb-4" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="keys-tab" data-bs-toggle="tab" data-bs-target="#keys" type="button" role="tab">密钥管理</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="sign-tab" data-bs-toggle="tab" data-bs-target="#sign" type="button" role="tab">签名</button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="verify-tab" data-bs-toggle="tab" data-bs-target="#verify" type="button" role="tab">验证</button>
+            </li>
+        </ul>
+
+        <!-- 标签页内容 -->
+        <div class="tab-content" id="myTabContent">
+            <!-- 密钥管理页面 -->
+            <div class="tab-pane fade show active" id="keys" role="tabpanel">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">当前密钥对</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">私钥</label>
+                            <div class="input-group">
+                                <input type="password" class="form-control" id="privateKey" readonly>
+                                <button class="btn btn-success" type="button" id="togglePrivateKey" onclick="togglePrivateKey()">显示</button>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('privateKey')">复制</button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">公钥 X</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="publicKeyX" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('publicKeyX')">复制</button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">公钥 Y</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="publicKeyY" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('publicKeyY')">复制</button>
+                            </div>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" onclick="generateNewKeypair()">生成新密钥对</button>
+                            <button class="btn btn-success" onclick="exportKeypair()">导出密钥对</button>
+                            <button class="btn btn-info" onclick="importKeypair()">导入密钥对</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 签名页面 -->
+            <div class="tab-pane fade" id="sign" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">文件选择</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">选择要签名的文件</label>
+                            <input type="file" class="form-control" id="fileToSign" accept=".txt">
+                            <div class="form-text">支持的文件类型：TXT</div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">文件哈希值</label>
+                            <textarea class="form-control" id="fileHash" rows="2" readonly></textarea>
+                        </div>
+                        <button class="btn btn-primary" onclick="signFile()">生成签名</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">签名结果</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">签名值 r</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="signatureR" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('signatureR')">复制</button>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">签名值 s</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="signatureS" readonly>
+                                <button class="btn btn-outline-secondary" type="button" onclick="copyToClipboard('signatureS')">复制</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 验证页面 -->
+            <div class="tab-pane fade" id="verify" role="tabpanel">
+                <div class="card mb-4">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="card-title mb-0">文件和签名信息</h5>
+                        <button class="btn btn-link" type="button" id="toggleVerifyDetails" onclick="toggleVerifyDetails()">展开详细信息</button>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">选择原始文件</label>
+                            <input type="file" class="form-control" id="fileToVerify" accept=".txt">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">签名文件 (.sig)</label>
+                            <input type="file" class="form-control" id="signatureFile" accept=".sig">
+                            <div class="form-text">可选：直接导入.sig签名文件</div>
+                        </div>
+                        <div id="verifyDetailsContainer" class="hide-details">
+                            <div class="mb-3">
+                                <label class="form-label">签名值 r</label>
+                                <input type="text" class="form-control" id="verifyR">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">签名值 s</label>
+                                <input type="text" class="form-control" id="verifyS">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">公钥 X</label>
+                                <input type="text" class="form-control" id="verifyPubX">
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">公钥 Y</label>
+                                <input type="text" class="form-control" id="verifyPubY">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary mt-3" onclick="verifySignature()">验证签名</button>
+                        <div id="verifyResult" class="mt-3"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 提示消息容器 -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+
+    <!-- Bootstrap Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- 自定义脚本 -->
+    <script src="js/app.js"></script>
+</body>
+</html>

@@ -75,6 +75,12 @@ class SM2GUI:
         ttk.Button(btn_frame, text="导出密钥对", command=self.export_keypair).pack(side='left', padx=5)
         ttk.Button(btn_frame, text="导入密钥对", command=self.import_keypair).pack(side='left', padx=5)
 
+        # 添加中央提示标签
+        message_frame = ttk.Frame(self.key_frame)
+        message_frame.pack(fill='x', padx=5, pady=20)
+        self.key_message = ttk.Label(message_frame, text="", font=('微软雅黑', 10))
+        self.key_message.pack()
+
     def setup_sign_page(self):
         """
         设置签名页面的界面元素
